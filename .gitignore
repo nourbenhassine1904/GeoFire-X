@@ -25,6 +25,9 @@ dist/
 # Model and experiment artifacts
 checkpoints/
 mlruns/
+mlartifacts/
+mlflow.db
+mlflow.db-*
 artifacts/
 *.pt
 *.pth

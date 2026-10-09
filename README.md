@@ -45,6 +45,11 @@ Empty directories contain `.gitkeep` placeholders so Git preserves the structure
 Keep manifests and split definitions small and versioned; keep datasets and
 model artifacts outside Git.
 
+`data/manifests/demo/` and `splits/demo/` hold synthetic reference fixtures
+(file names end in `_synthetic`) used to develop and test the pipeline before
+real WildfireSpreadTS data is downloaded — see `docs/DATASET_VERSION.md`. Real
+manifests and splits must use non-`demo` paths so the two are never confused.
+
 ## Collaboration Workflow
 
 - Keep `main` stable and ready for the whole team to use.
