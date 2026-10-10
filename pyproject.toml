@@ -13,6 +13,7 @@ dependencies = [
     "torch",
     "mlflow",
     "pyyaml",
+    "matplotlib",
 ]
 
 [project.optional-dependencies]
