@@ -4,14 +4,35 @@ Multimodal Spatio-Temporal Deep Learning for Next-Day Wildfire Spread Forecastin
 
 ## Current Phase
 
-Phase 1 — Reproducible Experimental Foundation
-
-The repository currently contains the shared project structure and experimental
-contracts. Phase 1 will establish reproducible data preparation, evaluation, and
-a persistence baseline before advanced model training begins.
+Phase 3 — Real-data spatio-temporal J+1 pipeline (technical verification, not
+yet a scientific benchmark — see `reports/REAL_PIPELINE_REPORT.md`).
 
 See [Project Context](docs/PROJECT_CONTEXT.md) for the scientific objective,
-input and target contracts, scope, and experimental rules.
+input and target contracts, scope, and experimental rules. See
+[Dataset Version](docs/DATASET_VERSION.md) and
+[Data Audit](reports/DATA_AUDIT.md) for the verified real-data facts (23 raw
+bands, not 40; active-fire binarization convention; official split
+recommendation), and [Split Strategy](docs/SPLIT_STRATEGY.md) for why the
+current 5-event real sample only supports a smoke-test split.
+
+### Reproducing the real pipeline (Phase 3)
+
+```bash
+pip install -e .
+
+# Fetch a real, deterministic 5-event sample (no full 48.36 GB download)
+python scripts/inspect_remote_archive.py --out data/raw/WildfireSpreadTS/archive_index.json
+python scripts/download_real_sample.py --dest data/raw/WildfireSpreadTS/real_sample --num_events 5 --seed 42
+python scripts/build_real_manifest.py --data_dir data/raw/WildfireSpreadTS/real_sample --out data/manifests/real/manifest_wildfirespreadts.csv
+
+# Persistence baseline on the real DataLoader (no neural network trained)
+python scripts/run_real_persistence_baseline.py \
+  --manifest data/manifests/real/manifest_wildfirespreadts.csv \
+  --split splits/real/smoke_test_split.csv --split_name train --context_days 1 \
+  --figures_dir reports/figures/real_baseline --out reports/real_baseline_results.json
+
+pytest -q
+```
 
 ## Primary Dataset
 
