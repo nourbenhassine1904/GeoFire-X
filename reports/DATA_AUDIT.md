@@ -1,6 +1,7 @@
 # GeoFire-X — Audit du dataset réel WildfireSpreadTS
 
-Commit Git : `ea18ac6e3f7d6ec4ad16c4ff5404db8a5d169c7f`
+Commit Git de référence (HEAD au moment de la génération de ce rapport, pas
+nécessairement le dernier commit permanent du dépôt) : `cdedd393d26fef828e6909cc052fc721e2226788`
 
 ## 1. Source et version du dataset
 

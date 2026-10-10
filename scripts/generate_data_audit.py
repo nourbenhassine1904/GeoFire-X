@@ -297,7 +297,8 @@ def main() -> None:
 
     report = f"""# GeoFire-X — Audit du dataset réel WildfireSpreadTS
 
-Commit Git : `{git_commit()}`
+Commit Git de référence (HEAD au moment de la génération de ce rapport, pas
+nécessairement le dernier commit permanent du dépôt) : `{git_commit()}`
 
 ## 1. Source et version du dataset
 
