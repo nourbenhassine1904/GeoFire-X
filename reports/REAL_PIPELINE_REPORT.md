@@ -146,6 +146,11 @@ ce qui était déjà observé.
   sur l'ensemble du corpus) cohérente avec le pattern observé : Persistence
   rate systématiquement les nouvelles ignitions, d'où un recall imparfait
   structurel, pas un défaut d'implémentation.
+- Le chiffre Dice=0.558 ci-dessus est une moyenne sur **toutes** les fenêtres,
+  dont près de la moitié n'ont aucun feu ni observé ni prédit (score parfait
+  par convention mathématique). Sur les seules fenêtres à cible réellement
+  positive, Dice tombe à 0.247 — analyse détaillée dans
+  `reports/VALIDATION_2.md` §F.
 
 ## 7. Lot 6 — MLOps (MLflow)
 
@@ -163,7 +168,7 @@ artefact. `mlflow.db` / `mlruns/` / `mlartifacts/` restent hors Git
 
 ```
 python3 -m pytest -q
-→ 65 passed (56 avant la baseline + vérifications additionnelles)
+→ 56 passed
 ```
 
 Composition : tests hérités Phase 1/2 (compatibilité synthétique + Zenodo
