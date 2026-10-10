@@ -19,7 +19,12 @@ import argparse
 import random
 from pathlib import Path
 
-from geofirex.remote_archive import extract_events, list_real_events, open_remote_zip
+from geofirex.remote_archive import (
+    extract_events,
+    list_real_events,
+    missing_files_for_event,
+    open_remote_zip,
+)
 
 
 def main() -> None:
@@ -41,12 +46,20 @@ def main() -> None:
     chosen = sorted(rng.sample(ordered_ids, k=min(args.num_events, len(ordered_ids))))
     print(f"Selected {len(chosen)} event(s) with seed={args.seed}: {chosen}")
 
-    already = [c for c in chosen if (dest_dir / c).is_dir() and any((dest_dir / c).glob("*.tif"))]
-    to_fetch = [c for c in chosen if c not in already]
-    if already:
-        print(f"Already present locally, skipping: {already}")
+    # An event is only "complete" when every expected filename is present on
+    # disk (non-empty) - a single leftover .tif from a prior interrupted run
+    # must never be mistaken for a fully extracted event.
+    missing_by_event = {c: missing_files_for_event(dest_dir, c, events[c]) for c in chosen}
+    complete = [c for c in chosen if not missing_by_event[c]]
+    incomplete_or_missing = [c for c in chosen if missing_by_event[c]]
+    if complete:
+        print(f"Already fully extracted, skipping: {complete}")
+    for c in incomplete_or_missing:
+        n_missing = len(missing_by_event[c])
+        if n_missing < len(events[c]):
+            print(f"Resuming incomplete event {c}: {n_missing}/{len(events[c])} file(s) still missing")
 
-    written = extract_events(zf, to_fetch, dest_dir) if to_fetch else []
+    written = extract_events(zf, incomplete_or_missing, dest_dir) if incomplete_or_missing else []
 
     print(f"Wrote {len(written)} real .tif file(s) to {dest_dir}")
     print(f"Bytes actually fetched from Zenodo this run: {f.bytes_fetched:,} "

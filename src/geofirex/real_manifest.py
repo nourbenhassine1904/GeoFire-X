@@ -22,8 +22,28 @@ import rasterio
 from geofirex.io import list_event_days, list_events
 
 
-def build_real_manifest(data_dir: Path) -> list[dict]:
-    """One row per real day file, with metadata read directly from the GeoTIFF."""
+def find_repo_root(start: Path) -> Path:
+    """Walk upward from `start` looking for pyproject.toml (the project root
+    marker). Falls back to `start` itself (resolved) if none is found, so
+    behavior stays predictable even when called outside this repository."""
+    start = Path(start).resolve()
+    for candidate in (start, *start.parents):
+        if (candidate / "pyproject.toml").is_file():
+            return candidate
+    return start
+
+
+def build_real_manifest(data_dir: Path, root: Path | None = None) -> list[dict]:
+    """One row per real day file, with metadata read directly from the GeoTIFF.
+
+    `relative_path` is stored relative to `root` - an explicit, documented base
+    (default: this repository's root, located by walking up from the current
+    working directory until a pyproject.toml is found) - never implicitly
+    relative to whatever the current working directory happens to be when the
+    function is called. If `data_dir` lies outside `root`, an absolute POSIX
+    path is stored instead of a misleading relative one.
+    """
+    resolved_root = Path(root).resolve() if root is not None else find_repo_root(Path.cwd())
     rows = []
     for event_dir in list_events(data_dir):
         year = event_dir.parent.name
@@ -50,13 +70,21 @@ def build_real_manifest(data_dir: Path) -> list[dict]:
                 crs = str(ds.crs) if ds.crs else ""
                 band_names = list(ds.descriptions) if ds.descriptions else []
 
+            abs_path = day.path.resolve()
+            try:
+                stored_path = abs_path.relative_to(resolved_root).as_posix()
+            except ValueError:
+                # data_dir is outside root - an absolute path is more honest
+                # than a relative one computed against the wrong base.
+                stored_path = abs_path.as_posix()
+
             rows.append(
                 {
                     "event_id": event_id,
                     "year": year,
                     "fire_id": fire_id,
                     "date": day.date,
-                    "relative_path": day.path.as_posix(),
+                    "relative_path": stored_path,
                     "observation_type": "daily_geotiff",
                     "num_channels": num_channels,
                     "height": height,
@@ -94,9 +122,21 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--data_dir", required=True)
     parser.add_argument("--out", required=True)
+    parser.add_argument(
+        "--root",
+        default=None,
+        help=(
+            "Base directory that relative_path values are resolved against. "
+            "Defaults to this repository's root (located by walking up from "
+            "the current working directory until a pyproject.toml is found)."
+        ),
+    )
     args = parser.parse_args()
 
-    rows = build_real_manifest(Path(args.data_dir))
+    root = Path(args.root) if args.root else find_repo_root(Path.cwd())
+    print(f"Paths will be stored relative to: {root}")
+
+    rows = build_real_manifest(Path(args.data_dir), root=root)
     if not rows:
         raise SystemExit(f"No real GeoTIFF files found under {args.data_dir}.")
     save_real_manifest(rows, Path(args.out))
